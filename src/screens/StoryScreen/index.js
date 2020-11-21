@@ -1,4 +1,5 @@
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useRoute} from '@react-navigation/native';
+import {API, graphqlOperation} from 'aws-amplify';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
@@ -8,65 +9,45 @@ import {
   Text,
   TextInput,
   TouchableWithoutFeedback,
-  View,
+  View
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {listStorys} from '../../../graphql/queries';
 import ProfilePicture from '../../components/ProfilePicture';
-import storiesData from '../../data/stories';
 import styles from './styles';
 
 const StoryScreen = () => {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const userId = route.params.userId;
-
-  const [userStories, setUserStories] = useState(null);
+  const [stories, setStories] = useState([]);
   const [activeStoryIndex, setActiveStoryIndex] = useState(null);
-  const [activeStory, setActiveStory] = useState(null);
+
+  const route = useRoute();
 
   useEffect(() => {
-    const uStories = storiesData.find(
-      (storyData) => storyData.user.id === userId,
-    );
-
-    setUserStories(uStories);
+    fetchStories();
     setActiveStoryIndex(0);
-  }, [userId]);
+  }, []);
 
-  useEffect(() => {
-    if (userStories) {
-      setActiveStory(userStories.stories[activeStoryIndex]);
+  const fetchStories = async () => {
+    try {
+      const storiesData = await API.graphql(graphqlOperation(listStorys));
+      console.log(storiesData);
+      setStories(storiesData.data.listStorys.items);
+    } catch (e) {
+      console.log('error fetching stories');
+      console.log(e);
     }
-  }, [activeStoryIndex, userStories]);
-
-  const navigateToNextUser = () => {
-    navigation.navigate('Story', {
-      userId: (parseInt(userId, 10) + 1).toString(),
-    });
-  };
-
-  const navigateToPreviousUser = () => {
-    navigation.navigate('Story', {
-      userId: (parseInt(userId, 10) - 1).toString(),
-    });
   };
 
   const handleNextStory = () => {
-    if (activeStoryIndex >= userStories.stories.length - 1) {
-      if (userId < storiesData.length) {
-        navigateToNextUser();
-      }
+    if (activeStoryIndex >= stories.length - 1) {
       return;
     }
     setActiveStoryIndex(activeStoryIndex + 1);
   };
 
-  const handlePreviousStory = () => {
-    if (activeStoryIndex === 0) {
-      if (userId > 1) {
-        navigateToPreviousUser();
-      }
+  const handlePrevStory = () => {
+    if (activeStoryIndex <= 0) {
       return;
     }
     setActiveStoryIndex(activeStoryIndex - 1);
@@ -75,11 +56,15 @@ const StoryScreen = () => {
   const handlePress = (evt) => {
     const x = evt.nativeEvent.locationX;
     const screenWidth = Dimensions.get('window').width;
-    const isRight = x > screenWidth / 2;
-    isRight ? handleNextStory() : handlePreviousStory();
+
+    if (x < screenWidth / 2) {
+      handlePrevStory();
+    } else {
+      handleNextStory();
+    }
   };
 
-  if (!activeStory) {
+  if (!stories || stories.length === 0) {
     return (
       <SafeAreaView>
         <ActivityIndicator />
@@ -87,31 +72,35 @@ const StoryScreen = () => {
     );
   }
 
+  const activeStory = stories[activeStoryIndex];
+
   return (
     <SafeAreaView style={styles.container}>
       <TouchableWithoutFeedback onPress={handlePress}>
-        <ImageBackground
-          source={{uri: activeStory.imageUri}}
-          style={styles.image}>
+        <ImageBackground source={{uri: activeStory.image}} style={styles.image}>
           <View style={styles.userInfo}>
-            <ProfilePicture uri={userStories.user.imageUri} size={50} />
-            <Text style={styles.userName}>{userStories.user.name}</Text>
-            <Text style={styles.postedTime}>{activeStory.postedTime}</Text>
+            <ProfilePicture uri={activeStory.user.image} size={50} />
+            <Text style={styles.userName}>{activeStory.user.name}</Text>
+            <Text style={styles.postedTime}>{activeStory.createdAt}</Text>
           </View>
           <View style={styles.bottomContainer}>
             <View style={styles.cameraButton}>
-              <Feather name="camera" size={30} color="#ffffff" />
+              <Feather name="camera" size={30} color={'#ffffff'} />
             </View>
             <View style={styles.textInputContainer}>
               <TextInput
                 style={styles.textInput}
                 editable
                 placeholder="Send message"
-                placeholderTextColor="white"
+                placeholderTextColor={'white'}
               />
             </View>
             <View style={styles.messageButton}>
-              <Ionicons name="paper-plane-outline" size={30} color="#ffffff" />
+              <Ionicons
+                name="paper-plane-outline"
+                size={35}
+                color={'#ffffff'}
+              />
             </View>
           </View>
         </ImageBackground>

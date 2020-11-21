@@ -2,8 +2,12 @@
  * @format
  */
 
+import Amplify from 'aws-amplify';
 import {AppRegistry} from 'react-native';
-import {name as appName} from './app.json';
 import App from './App';
+import {name as appName} from './app.json';
+import config from './aws-exports';
+
+Amplify.configure(config);
 
 AppRegistry.registerComponent(appName, () => App);

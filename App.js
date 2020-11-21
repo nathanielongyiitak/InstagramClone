@@ -6,6 +6,7 @@
  * @flow strict-local
  */
 import {NavigationContainer} from '@react-navigation/native';
+import {withAuthenticator} from 'aws-amplify-react-native';
 import React from 'react';
 import {StatusBar} from 'react-native';
 import Router from './src/router';
@@ -19,4 +20,4 @@ const App: () => React$Node = () => {
   );
 };
 
-export default App;
+export default withAuthenticator(App);

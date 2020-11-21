@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View} from 'react-native';
+import {View} from 'react-native';
 import Body from './components/Body';
 import Footer from './components/Footer';
 import Header from './components/Header';
@@ -7,12 +7,12 @@ import Header from './components/Header';
 const Post = ({post}) => {
   return (
     <View>
-      <Header imageUri={post.user.imageUri} name={post.user.name} />
-      <Body imageUri={post.imageUri} />
+      <Header imageUri={post.image} name={post.user.name} />
+      <Body imageUri={post.image} />
       <Footer
-        likesCount={post.likesCount}
+        likesCount={post.likes}
         caption={post.caption}
-        postedAt={post.postedAt}
+        postedAt={post.createdAt}
       />
     </View>
   );
